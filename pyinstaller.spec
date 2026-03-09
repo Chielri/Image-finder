@@ -1,6 +1,7 @@
 # -*- mode: python ; coding: utf-8 -*-
 """PyInstaller spec for Document Image Search — single-folder Windows build."""
 
+import glob
 import os
 import sys
 from PyInstaller.utils.hooks import collect_submodules, collect_data_files
@@ -29,9 +30,19 @@ if os.path.isdir(frontend_dist):
     datas.append((frontend_dist, "frontend_dist"))
 
 # Bundle Poppler Windows binaries (downloaded by scripts/download_poppler_windows.py)
+# Use explicit per-file entries to avoid PyInstaller directory-copy issues.
 poppler_bin = os.path.join("backend", "poppler", "bin")
 if os.path.isdir(poppler_bin):
-    datas.append((poppler_bin, os.path.join("poppler", "bin")))
+    poppler_dest = os.path.join("poppler", "bin")
+    poppler_files = glob.glob(os.path.join(poppler_bin, "*"))
+    if not poppler_files:
+        raise FileNotFoundError(
+            f"Poppler directory exists at {poppler_bin} but contains no files."
+        )
+    for pf in poppler_files:
+        if os.path.isfile(pf):
+            datas.append((pf, poppler_dest))
+    print(f"PyInstaller spec: bundling {len(poppler_files)} poppler files from {poppler_bin}")
 elif sys.platform == "win32":
     raise FileNotFoundError(
         "Poppler binaries not found at backend/poppler/bin. "
