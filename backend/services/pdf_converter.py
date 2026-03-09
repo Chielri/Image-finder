@@ -1,10 +1,29 @@
 import logging
+import sys
 from pathlib import Path
 
 import numpy as np
 from PIL import Image
 
 logger = logging.getLogger(__name__)
+
+
+def _get_poppler_path() -> str | None:
+    """Return the path to bundled poppler binaries on Windows, or None."""
+    if sys.platform != "win32":
+        return None
+    # When running from a PyInstaller bundle, poppler binaries are in _MEIPASS/poppler
+    bundle_dir = getattr(sys, "_MEIPASS", None)
+    if bundle_dir:
+        candidate = Path(bundle_dir) / "poppler"
+        if candidate.is_dir():
+            return str(candidate)
+    # When running from a PyInstaller --onedir collect folder
+    exe_dir = Path(sys.executable).parent
+    candidate = exe_dir / "poppler"
+    if candidate.is_dir():
+        return str(candidate)
+    return None
 
 
 def convert_document_to_images(file_path: str, dpi: int = 300) -> list[np.ndarray]:
@@ -26,8 +45,9 @@ def _convert_pdf(file_path: str, dpi: int) -> list[np.ndarray]:
     except ImportError:
         raise RuntimeError("pdf2image is required for PDF support. Install it with: pip install pdf2image")
 
-    logger.info("Converting PDF %s at %d DPI", file_path, dpi)
-    pil_images = convert_from_path(file_path, dpi=dpi)
+    poppler_path = _get_poppler_path()
+    logger.info("Converting PDF %s at %d DPI (poppler_path=%s)", file_path, dpi, poppler_path)
+    pil_images = convert_from_path(file_path, dpi=dpi, poppler_path=poppler_path)
     pages = []
     for i, pil_img in enumerate(pil_images):
         arr = np.array(pil_img.convert("RGB"))

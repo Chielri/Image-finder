@@ -3,6 +3,7 @@
 
 import os
 import sys
+import glob
 from PyInstaller.utils.hooks import collect_submodules, collect_data_files
 
 block_cipher = None
@@ -28,10 +29,19 @@ frontend_dist = os.path.join("backend", "frontend_dist")
 if os.path.isdir(frontend_dist):
     datas.append((frontend_dist, "frontend_dist"))
 
+# Bundle poppler binaries for Windows PDF support.
+# POPPLER_PATH env var should point to the directory containing pdftoppm.exe.
+poppler_binaries = []
+poppler_path = os.environ.get("POPPLER_PATH", "")
+if poppler_path and os.path.isdir(poppler_path):
+    for f in glob.glob(os.path.join(poppler_path, "*")):
+        if os.path.isfile(f):
+            poppler_binaries.append((f, "poppler"))
+
 a = Analysis(
     [os.path.join("backend", "main.py")],
     pathex=[os.path.join(os.path.dirname(os.path.abspath(SPEC)), "backend")],
-    binaries=[],
+    binaries=poppler_binaries,
     datas=datas,
     hiddenimports=hidden_imports,
     hookspath=[],

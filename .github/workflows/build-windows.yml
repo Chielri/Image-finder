@@ -57,18 +57,14 @@ jobs:
           Copy-Item -Recurse frontend/dist backend/frontend_dist
         shell: pwsh
 
-      - name: Build Windows executable with PyInstaller
-        run: |
-          pyinstaller --noconfirm pyinstaller.spec
-
-      - name: Bundle poppler binaries
+      - name: Locate poppler binaries
+        id: poppler
         run: |
           $popplerBin = $null
           $cmd = Get-Command pdftoppm -ErrorAction SilentlyContinue
           if ($cmd) {
             $popplerBin = Split-Path $cmd.Source
           }
-          # Fallback: check common chocolatey install locations
           if (-not $popplerBin) {
             $chocoLocations = @(
               "C:\ProgramData\chocolatey\lib\poppler\tools\Library\bin",
@@ -81,7 +77,6 @@ jobs:
               }
             }
           }
-          # Fallback: search poppler under chocolatey lib
           if (-not $popplerBin) {
             $found = Get-ChildItem -Path "C:\ProgramData\chocolatey\lib\poppler" -Recurse -Filter "pdftoppm.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
             if ($found) {
@@ -89,12 +84,17 @@ jobs:
             }
           }
           if ($popplerBin) {
-            Write-Host "Found poppler binaries at: $popplerBin"
-            Copy-Item -Recurse $popplerBin dist/DocumentImageSearch/poppler
+            Write-Host "Found poppler at: $popplerBin"
+            echo "POPPLER_PATH=$popplerBin" >> $env:GITHUB_ENV
           } else {
-            Write-Warning "Poppler binaries not found; PDF support may not work."
+            Write-Error "Poppler binaries not found; cannot bundle PDF support."
+            exit 1
           }
         shell: pwsh
+
+      - name: Build Windows executable with PyInstaller
+        run: |
+          pyinstaller --noconfirm pyinstaller.spec
 
       - name: Create release archive
         run: |
