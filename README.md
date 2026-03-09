@@ -344,8 +344,6 @@ Image-finder/
 │   │   ├── feature_matcher.py           # ORB keypoint + homography matching
 │   │   ├── nms.py                       # Non-maximum suppression
 │   │   └── search_pipeline.py           # Orchestrates the full search workflow
-│   ├── utils/
-│   │   └── image_utils.py
 │   └── tests/
 │       ├── test_pipeline.py
 │       ├── test_template_matcher.py
