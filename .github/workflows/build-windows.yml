@@ -38,6 +38,16 @@ jobs:
       - name: Download Poppler binaries for bundling
         run: python scripts/download_poppler_windows.py
 
+      - name: Validate Poppler download
+        run: |
+          if (Test-Path "backend/poppler/bin/pdftoppm.exe") {
+            Write-Host "Poppler download verified: pdftoppm.exe found."
+          } else {
+            Write-Error "Poppler download failed: backend/poppler/bin/pdftoppm.exe not found!"
+            exit 1
+          }
+        shell: pwsh
+
       - name: Build frontend
         run: |
           cd frontend
