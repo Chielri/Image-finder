@@ -63,3 +63,14 @@ async def health():
 _frontend = _get_frontend_dir()
 if _frontend is not None:
     app.mount("/", StaticFiles(directory=str(_frontend), html=True), name="frontend")
+
+
+if __name__ == "__main__":
+    import webbrowser
+
+    import uvicorn
+
+    host = "127.0.0.1"
+    port = 8000
+    webbrowser.open(f"http://{host}:{port}")
+    uvicorn.run(app, host=host, port=port)
