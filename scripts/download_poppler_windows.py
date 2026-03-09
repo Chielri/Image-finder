@@ -14,8 +14,10 @@ import logging
 import os
 import shutil
 import sys
+import time
 import zipfile
 from pathlib import Path
+from urllib.error import URLError
 from urllib.request import urlopen, Request
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
@@ -42,8 +44,20 @@ def download_poppler() -> None:
     logger.info("URL: %s", POPPLER_URL)
 
     req = Request(POPPLER_URL, headers={"User-Agent": "Mozilla/5.0"})
-    with urlopen(req, timeout=120) as resp:
-        data = resp.read()
+    max_retries = 4
+    data = None
+    for attempt in range(1, max_retries + 1):
+        try:
+            with urlopen(req, timeout=120) as resp:
+                data = resp.read()
+            break
+        except (URLError, OSError) as exc:
+            if attempt == max_retries:
+                logger.error("Download failed after %d attempts: %s", max_retries, exc)
+                sys.exit(1)
+            wait = 2 ** attempt
+            logger.warning("Download attempt %d failed (%s), retrying in %ds...", attempt, exc, wait)
+            time.sleep(wait)
 
     logger.info("Downloaded %.1f MB", len(data) / (1024 * 1024))
 
