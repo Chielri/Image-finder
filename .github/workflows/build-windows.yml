@@ -32,6 +32,14 @@ jobs:
       - name: Install poppler (Windows)
         run: choco install poppler -y
 
+      - name: Refresh PATH after poppler install
+        run: |
+          $machinePath = [Environment]::GetEnvironmentVariable("Path", "Machine")
+          $userPath = [Environment]::GetEnvironmentVariable("Path", "User")
+          $newPath = "$machinePath;$userPath"
+          echo "PATH=$newPath" >> $env:GITHUB_ENV
+        shell: pwsh
+
       - name: Install Python dependencies
         run: |
           cd backend
@@ -55,11 +63,36 @@ jobs:
 
       - name: Bundle poppler binaries
         run: |
-          $popplerBin = (Get-Command pdftoppm -ErrorAction SilentlyContinue).Source | Split-Path
+          $popplerBin = $null
+          $cmd = Get-Command pdftoppm -ErrorAction SilentlyContinue
+          if ($cmd) {
+            $popplerBin = Split-Path $cmd.Source
+          }
+          # Fallback: check common chocolatey install locations
+          if (-not $popplerBin) {
+            $chocoLocations = @(
+              "C:\ProgramData\chocolatey\lib\poppler\tools\Library\bin",
+              "C:\ProgramData\chocolatey\bin"
+            )
+            foreach ($loc in $chocoLocations) {
+              if (Test-Path (Join-Path $loc "pdftoppm.exe")) {
+                $popplerBin = $loc
+                break
+              }
+            }
+          }
+          # Fallback: search poppler under chocolatey lib
+          if (-not $popplerBin) {
+            $found = Get-ChildItem -Path "C:\ProgramData\chocolatey\lib\poppler" -Recurse -Filter "pdftoppm.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
+            if ($found) {
+              $popplerBin = $found.DirectoryName
+            }
+          }
           if ($popplerBin) {
+            Write-Host "Found poppler binaries at: $popplerBin"
             Copy-Item -Recurse $popplerBin dist/DocumentImageSearch/poppler
           } else {
-            Write-Warning "Poppler binaries not found on PATH; PDF support may not work."
+            Write-Warning "Poppler binaries not found; PDF support may not work."
           }
         shell: pwsh
 
