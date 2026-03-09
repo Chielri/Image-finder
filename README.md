@@ -1,6 +1,18 @@
-# Document Image Search
+# Document Image Search — Find Images Inside PDFs and Documents
 
-Document Image Search is a web application that locates occurrences of a query image within a document. It accepts a document file (PDF, PNG, JPG, TIFF, or BMP) and a query image (PNG or JPG), then returns the number of matches found, their locations as bounding boxes, and per-match confidence scores. Results are displayed with visual highlights overlaid on each document page.
+**Document Image Search** is a free, open-source tool for finding and locating images within PDFs, scanned documents, and image files. Upload any PDF, PNG, JPG, TIFF, or BMP document along with a target image, and the tool detects every occurrence — returning exact locations, bounding boxes, and confidence scores with visual highlights.
+
+Use it to search for logos, signatures, stamps, icons, watermarks, or any repeated visual element across multi-page documents. Built with Python (FastAPI, OpenCV) and React, it supports multi-scale template matching and feature-based keypoint matching for flexible, accurate image detection.
+
+### Key Features
+
+- **Image-in-document search** — find where a specific image appears inside a PDF or scanned document
+- **Multi-scale matching** — detect images at different sizes using OpenCV template matching
+- **Rotation and perspective support** — ORB feature matching with homography handles rotated or skewed images
+- **Multi-page PDF support** — automatically processes every page at 300 DPI
+- **Visual results** — highlighted bounding boxes with per-match confidence scores
+- **REST API** — integrate document image search into your own workflows
+- **Self-contained executable** — download and run with no dependencies
 
 ## Table of Contents
 
