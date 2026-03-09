@@ -71,15 +71,25 @@ jobs:
           if (Test-Path "dist/DocumentImageSearch/") {
             Get-ChildItem "dist/DocumentImageSearch/" -Directory | Format-Table Name
           }
-          if (Test-Path "dist/DocumentImageSearch/poppler/bin/pdftoppm.exe") {
-            Write-Host "Poppler bundled successfully."
-            Get-ChildItem "dist/DocumentImageSearch/poppler/bin/" | Format-Table Name, Length
-          } else {
-            Write-Error "Poppler binaries missing from build output!"
-            if (Test-Path "dist/DocumentImageSearch/poppler/") {
-              Write-Host "poppler/ dir exists but bin/ contents:"
-              Get-ChildItem "dist/DocumentImageSearch/poppler/" -Recurse | Format-Table FullName
+          # PyInstaller 6.x places data files inside _internal/
+          $candidates = @(
+            "dist/DocumentImageSearch/_internal/poppler/bin/pdftoppm.exe",
+            "dist/DocumentImageSearch/poppler/bin/pdftoppm.exe"
+          )
+          $found = $false
+          foreach ($candidate in $candidates) {
+            if (Test-Path $candidate) {
+              $binDir = Split-Path $candidate
+              Write-Host "Poppler bundled successfully at: $binDir"
+              Get-ChildItem $binDir | Format-Table Name, Length
+              $found = $true
+              break
             }
+          }
+          if (-not $found) {
+            Write-Error "Poppler binaries missing from build output!"
+            Write-Host "Searching for pdftoppm.exe in dist/..."
+            Get-ChildItem "dist/" -Recurse -Filter "pdftoppm.exe" -ErrorAction SilentlyContinue | Format-Table FullName
             exit 1
           }
         shell: pwsh
