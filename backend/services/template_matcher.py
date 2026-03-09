@@ -24,7 +24,21 @@ def find_matches_single_scale(
         logger.debug("Query larger than page at scale %.2f, skipping", scale)
         return []
 
+    # TM_CCOEFF_NORMED returns 1.0 everywhere when the template has zero
+    # variance (uniform color), producing massive false positives.  Skip
+    # matching in that case.
+    if query_gray.std() < 1.0:
+        logger.debug("Query has near-zero variance at scale %.2f, skipping", scale)
+        return []
+
     result = cv2.matchTemplate(page_gray, query_gray, MATCH_METHOD)
+
+    # Guard against NaN values that can appear when a page region has zero
+    # variance (e.g. blank area).  Replace NaN with 0 so they never pass
+    # the confidence threshold.
+    if np.isnan(result).any():
+        result = np.nan_to_num(result, nan=0.0)
+
     locations = np.where(result >= confidence_threshold)
 
     detections = []
@@ -54,6 +68,9 @@ def find_matches_multi_scale(
     original_qh, original_qw = query_gray.shape[:2]
 
     scales = np.linspace(scale_min, scale_max, scale_steps)
+    # Always include 1.0 (original size) to avoid missing exact matches
+    if scale_min <= 1.0 <= scale_max and 1.0 not in scales:
+        scales = np.sort(np.append(scales, 1.0))
     for scale in scales:
         new_w = max(1, int(original_qw * scale))
         new_h = max(1, int(original_qh * scale))

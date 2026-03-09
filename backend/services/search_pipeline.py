@@ -1,5 +1,4 @@
 import logging
-import os
 import uuid
 from pathlib import Path
 
@@ -12,7 +11,7 @@ from models.requests import SearchParams
 from models.responses import BoundingBox, MatchResult, PageResult, SearchResponse
 from services.feature_matcher import find_matches_feature
 from services.image_preprocessor import preprocess_for_matching
-from services.nms import apply_nms
+from services.nms import Detection, apply_nms
 from services.pdf_converter import convert_document_to_images
 from services.template_matcher import find_matches_multi_scale, find_matches_single_scale
 
@@ -91,7 +90,7 @@ def get_page_image_path(job_id: str, page_number: int) -> str | None:
     return None
 
 
-def _run_matcher(page_gray, query_gray, params: SearchParams):
+def _run_matcher(page_gray: np.ndarray, query_gray: np.ndarray, params: SearchParams) -> list[Detection]:
     if params.method == "template":
         return find_matches_single_scale(page_gray, query_gray, params.confidence)
     elif params.method == "feature":
@@ -113,7 +112,7 @@ def _load_image_rgb(path: str) -> np.ndarray:
     return np.array(background)
 
 
-def _annotate_page(page_rgb: np.ndarray, detections) -> np.ndarray:
+def _annotate_page(page_rgb: np.ndarray, detections: list[Detection]) -> np.ndarray:
     annotated = page_rgb.copy()
     for det in detections:
         x, y, w, h = det.x, det.y, det.width, det.height

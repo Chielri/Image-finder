@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import axios from 'axios'
 import { runSearch } from '../api/searchApi'
 import { SearchParams, SearchResponse } from '../types'
 
@@ -26,8 +27,12 @@ export function useSearch(): UseSearchReturn {
       setResult(data)
       setState('success')
     } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : 'An unexpected error occurred.'
+      let message = 'An unexpected error occurred.'
+      if (axios.isAxiosError(err) && err.response?.data?.detail) {
+        message = String(err.response.data.detail)
+      } else if (err instanceof Error) {
+        message = err.message
+      }
       setError(message)
       setState('error')
     }

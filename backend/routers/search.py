@@ -1,7 +1,7 @@
 import logging
 import os
-import shutil
 import tempfile
+import uuid
 from pathlib import Path
 
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
@@ -9,7 +9,7 @@ from fastapi.responses import FileResponse
 
 from config import settings
 from models.requests import SearchParams
-from models.responses import SearchResponse
+from models.responses import SearchResponse, StatusResponse
 from services.search_pipeline import get_page_image_path, run_search
 
 logger = logging.getLogger(__name__)
@@ -48,6 +48,13 @@ async def search(
         doc_path = _save_upload(document, tmp_dir, max_bytes)
         query_path = _save_upload(query_image, tmp_dir, max_bytes)
 
+        valid_methods = {"template", "feature", "multi_scale"}
+        if method not in valid_methods:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid method '{method}'. Allowed: {sorted(valid_methods)}",
+            )
+
         params = SearchParams(
             confidence=confidence,
             method=method,  # type: ignore[arg-type]
@@ -65,19 +72,19 @@ async def search(
 
 
 @router.get("/pages/{job_id}/{page_number}")
-async def get_page(job_id: str, page_number: int, highlight: bool = True):
+async def get_page(job_id: str, page_number: int):
     image_path = get_page_image_path(job_id, page_number)
     if image_path is None:
         raise HTTPException(status_code=404, detail="Page not found")
     return FileResponse(image_path, media_type="image/jpeg")
 
 
-@router.get("/status/{job_id}")
+@router.get("/status/{job_id}", response_model=StatusResponse)
 async def get_status(job_id: str):
     job_dir = Path(settings.upload_dir) / job_id
     if not job_dir.exists():
         raise HTTPException(status_code=404, detail="Job not found")
-    return {"job_id": job_id, "status": "completed", "progress": 1.0}
+    return StatusResponse(job_id=job_id, status="completed", progress=1.0)
 
 
 @router.get("/config")
@@ -99,8 +106,9 @@ def _validate_content_type(content_type: str | None, allowed: set[str], field: s
 
 
 def _save_upload(upload: UploadFile, directory: str, max_bytes: int) -> str:
-    suffix = Path(upload.filename or "file").suffix
-    dest = os.path.join(directory, f"{upload.filename or 'upload'}{suffix}" if not upload.filename else upload.filename)
+    suffix = Path(upload.filename or "file").suffix or ".bin"
+    unique_name = f"{uuid.uuid4().hex}{suffix}"
+    dest = os.path.join(directory, unique_name)
     data = upload.file.read()
     if len(data) > max_bytes:
         raise HTTPException(

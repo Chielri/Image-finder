@@ -1,20 +1,28 @@
-import os
-from pydantic_settings import BaseSettings
+from pydantic import field_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    upload_dir: str = os.getenv("UPLOAD_DIR", "/tmp/doc-image-search")
-    max_file_size_mb: int = int(os.getenv("MAX_FILE_SIZE_MB", "50"))
-    max_pages: int = int(os.getenv("MAX_PAGES", "200"))
-    default_dpi: int = int(os.getenv("DEFAULT_DPI", "300"))
-    default_confidence: float = float(os.getenv("DEFAULT_CONFIDENCE", "0.8"))
-    cleanup_ttl_minutes: int = int(os.getenv("CLEANUP_TTL_MINUTES", "30"))
-    cors_origins: list[str] = os.getenv(
-        "CORS_ORIGINS", "http://localhost:5173"
-    ).split(",")
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
-    class Config:
-        env_file = ".env"
+    upload_dir: str = "/tmp/doc-image-search"
+    max_file_size_mb: int = 50
+    max_pages: int = 200
+    default_dpi: int = 300
+    default_confidence: float = 0.8
+    cleanup_ttl_minutes: int = 30
+    cors_origins: str = "http://localhost:5173"
+
+    @field_validator("cors_origins", mode="before")
+    @classmethod
+    def _parse_cors_origins(cls, v: str | list[str]) -> str | list[str]:
+        return v
+
+    @property
+    def cors_origin_list(self) -> list[str]:
+        if isinstance(self.cors_origins, list):
+            return self.cors_origins
+        return [o.strip() for o in self.cors_origins.split(",") if o.strip()]
 
 
 settings = Settings()

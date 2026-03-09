@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { MatchResult } from '../types'
 import { BoundingBoxOverlay } from './BoundingBoxOverlay'
 
@@ -12,19 +12,32 @@ export function PageViewer({ imageUrl, matches, minConfidence }: Props) {
   const imgRef = useRef<HTMLImageElement>(null)
   const [dimensions, setDimensions] = useState({ natural: { w: 0, h: 0 }, display: { w: 0, h: 0 } })
 
+  const updateDimensions = useCallback(() => {
+    const img = imgRef.current
+    if (!img || img.naturalWidth === 0) return
+    setDimensions({
+      natural: { w: img.naturalWidth, h: img.naturalHeight },
+      display: { w: img.clientWidth, h: img.clientHeight },
+    })
+  }, [])
+
   useEffect(() => {
     const img = imgRef.current
     if (!img) return
-    const update = () => {
-      setDimensions({
-        natural: { w: img.naturalWidth, h: img.naturalHeight },
-        display: { w: img.clientWidth, h: img.clientHeight },
-      })
-    }
-    if (img.complete) update()
-    img.addEventListener('load', update)
-    return () => img.removeEventListener('load', update)
-  }, [imageUrl])
+
+    if (img.complete && img.naturalWidth > 0) updateDimensions()
+
+    img.addEventListener('load', updateDimensions)
+    return () => img.removeEventListener('load', updateDimensions)
+  }, [imageUrl, updateDimensions])
+
+  useEffect(() => {
+    const img = imgRef.current
+    if (!img) return
+    const observer = new ResizeObserver(updateDimensions)
+    observer.observe(img)
+    return () => observer.disconnect()
+  }, [updateDimensions])
 
   return (
     <div className="relative inline-block w-full">
