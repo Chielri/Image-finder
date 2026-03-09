@@ -51,14 +51,13 @@ jobs:
 
       - name: Build Windows executable with PyInstaller
         run: |
-          cd backend
-          pyinstaller --noconfirm ../pyinstaller.spec
+          pyinstaller --noconfirm pyinstaller.spec
 
       - name: Bundle poppler binaries
         run: |
           $popplerBin = (Get-Command pdftoppm -ErrorAction SilentlyContinue).Source | Split-Path
           if ($popplerBin) {
-            Copy-Item -Recurse $popplerBin backend/dist/DocumentImageSearch/poppler
+            Copy-Item -Recurse $popplerBin dist/DocumentImageSearch/poppler
           } else {
             Write-Warning "Poppler binaries not found on PATH; PDF support may not work."
           }
@@ -66,7 +65,7 @@ jobs:
 
       - name: Create release archive
         run: |
-          cd backend/dist
+          cd dist
           Compress-Archive -Path DocumentImageSearch -DestinationPath DocumentImageSearch-windows.zip
         shell: pwsh
 
@@ -74,11 +73,11 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: DocumentImageSearch-windows
-          path: backend/dist/DocumentImageSearch-windows.zip
+          path: dist/DocumentImageSearch-windows.zip
           retention-days: 30
 
       - name: Upload release asset
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          files: backend/dist/DocumentImageSearch-windows.zip
+          files: dist/DocumentImageSearch-windows.zip

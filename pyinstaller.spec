@@ -24,13 +24,13 @@ hidden_imports = (
 
 # Data files: frontend build, and any data files needed by dependencies
 datas = []
-frontend_dist = os.path.join("frontend_dist")
+frontend_dist = os.path.join("backend", "frontend_dist")
 if os.path.isdir(frontend_dist):
     datas.append((frontend_dist, "frontend_dist"))
 
 a = Analysis(
-    ["main.py"],
-    pathex=[],
+    [os.path.join("backend", "main.py")],
+    pathex=[os.path.join(os.path.dirname(os.path.abspath(SPEC)), "backend")],
     binaries=[],
     datas=datas,
     hiddenimports=hidden_imports,
