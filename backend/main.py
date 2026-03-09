@@ -1,12 +1,26 @@
 import logging
 import os
+import sys
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from config import settings
 from routers.search import router
+
+
+def _get_frontend_dir() -> Path | None:
+    """Return the path to the bundled frontend build, if it exists."""
+    if getattr(sys, "frozen", False):
+        # Running as a PyInstaller bundle
+        base = Path(sys._MEIPASS)
+    else:
+        base = Path(__file__).resolve().parent
+    candidate = base / "frontend_dist"
+    return candidate if candidate.is_dir() else None
 
 logging.basicConfig(
     level=logging.INFO,
@@ -43,3 +57,9 @@ app.include_router(router)
 @app.get("/health")
 async def health():
     return {"status": "ok"}
+
+
+# Serve the bundled frontend (when running as a packaged executable)
+_frontend = _get_frontend_dir()
+if _frontend is not None:
+    app.mount("/", StaticFiles(directory=str(_frontend), html=True), name="frontend")

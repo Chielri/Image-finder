@@ -1,0 +1,84 @@
+name: Build Windows Executable
+
+on:
+  push:
+    branches: [master]
+    tags: ["v*"]
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install poppler (Windows)
+        run: choco install poppler -y
+
+      - name: Install Python dependencies
+        run: |
+          cd backend
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Build frontend
+        run: |
+          cd frontend
+          npm ci
+          npm run build
+
+      - name: Copy frontend build into backend
+        run: |
+          Copy-Item -Recurse frontend/dist backend/frontend_dist
+        shell: pwsh
+
+      - name: Build Windows executable with PyInstaller
+        run: |
+          cd backend
+          pyinstaller --noconfirm ../pyinstaller.spec
+
+      - name: Bundle poppler binaries
+        run: |
+          $popplerBin = (Get-Command pdftoppm -ErrorAction SilentlyContinue).Source | Split-Path
+          if ($popplerBin) {
+            Copy-Item -Recurse $popplerBin backend/dist/DocumentImageSearch/poppler
+          } else {
+            Write-Warning "Poppler binaries not found on PATH; PDF support may not work."
+          }
+        shell: pwsh
+
+      - name: Create release archive
+        run: |
+          cd backend/dist
+          Compress-Archive -Path DocumentImageSearch -DestinationPath DocumentImageSearch-windows.zip
+        shell: pwsh
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: DocumentImageSearch-windows
+          path: backend/dist/DocumentImageSearch-windows.zip
+          retention-days: 30
+
+      - name: Upload release asset
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: backend/dist/DocumentImageSearch-windows.zip
