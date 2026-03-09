@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import os
 import tempfile
@@ -63,7 +64,9 @@ async def search(
         )
 
         try:
-            result = run_search(doc_path, query_path, params)
+            result = await asyncio.to_thread(
+                run_search, doc_path, query_path, params
+            )
         except Exception as exc:
             logger.exception("Search failed")
             raise HTTPException(status_code=500, detail=str(exc)) from exc
