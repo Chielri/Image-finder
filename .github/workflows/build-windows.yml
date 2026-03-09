@@ -29,22 +29,14 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
-      - name: Install poppler (Windows)
-        run: choco install poppler -y
-
-      - name: Refresh PATH after poppler install
-        run: |
-          $machinePath = [Environment]::GetEnvironmentVariable("Path", "Machine")
-          $userPath = [Environment]::GetEnvironmentVariable("Path", "User")
-          $newPath = "$machinePath;$userPath"
-          echo "PATH=$newPath" >> $env:GITHUB_ENV
-        shell: pwsh
-
       - name: Install Python dependencies
         run: |
           cd backend
           pip install -r requirements.txt
           pip install pyinstaller
+
+      - name: Download Poppler binaries for bundling
+        run: python scripts/download_poppler_windows.py
 
       - name: Build frontend
         run: |
@@ -61,38 +53,13 @@ jobs:
         run: |
           pyinstaller --noconfirm pyinstaller.spec
 
-      - name: Bundle poppler binaries
+      - name: Verify Poppler is bundled
         run: |
-          $popplerBin = $null
-          $cmd = Get-Command pdftoppm -ErrorAction SilentlyContinue
-          if ($cmd) {
-            $popplerBin = Split-Path $cmd.Source
-          }
-          # Fallback: check common chocolatey install locations
-          if (-not $popplerBin) {
-            $chocoLocations = @(
-              "C:\ProgramData\chocolatey\lib\poppler\tools\Library\bin",
-              "C:\ProgramData\chocolatey\bin"
-            )
-            foreach ($loc in $chocoLocations) {
-              if (Test-Path (Join-Path $loc "pdftoppm.exe")) {
-                $popplerBin = $loc
-                break
-              }
-            }
-          }
-          # Fallback: search poppler under chocolatey lib
-          if (-not $popplerBin) {
-            $found = Get-ChildItem -Path "C:\ProgramData\chocolatey\lib\poppler" -Recurse -Filter "pdftoppm.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
-            if ($found) {
-              $popplerBin = $found.DirectoryName
-            }
-          }
-          if ($popplerBin) {
-            Write-Host "Found poppler binaries at: $popplerBin"
-            Copy-Item -Recurse $popplerBin dist/DocumentImageSearch/poppler
+          if (Test-Path "dist/DocumentImageSearch/poppler/bin/pdftoppm.exe") {
+            Write-Host "Poppler bundled successfully."
           } else {
-            Write-Warning "Poppler binaries not found; PDF support may not work."
+            Write-Error "Poppler binaries missing from build output!"
+            exit 1
           }
         shell: pwsh
 

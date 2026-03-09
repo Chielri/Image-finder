@@ -28,6 +28,14 @@ frontend_dist = os.path.join("backend", "frontend_dist")
 if os.path.isdir(frontend_dist):
     datas.append((frontend_dist, "frontend_dist"))
 
+# Bundle Poppler Windows binaries (downloaded by scripts/download_poppler_windows.py)
+poppler_bin = os.path.join("backend", "poppler", "bin")
+if os.path.isdir(poppler_bin):
+    datas.append((poppler_bin, os.path.join("poppler", "bin")))
+elif sys.platform == "win32":
+    print("WARNING: Poppler binaries not found at backend/poppler/bin.")
+    print("Run 'python scripts/download_poppler_windows.py' first.")
+
 a = Analysis(
     [os.path.join("backend", "main.py")],
     pathex=[os.path.join(os.path.dirname(os.path.abspath(SPEC)), "backend")],

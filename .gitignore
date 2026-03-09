@@ -20,6 +20,9 @@ frontend/dist/
 .DS_Store
 Thumbs.db
 
+# Bundled Poppler binaries (downloaded at build time)
+backend/poppler/
+
 # Temp files
 /tmp/
 *.log
