@@ -42,6 +42,8 @@ jobs:
         run: |
           if (Test-Path "backend/poppler/bin/pdftoppm.exe") {
             Write-Host "Poppler download verified: pdftoppm.exe found."
+            Write-Host "Contents of backend/poppler/bin/:"
+            Get-ChildItem "backend/poppler/bin/" | Format-Table Name, Length
           } else {
             Write-Error "Poppler download failed: backend/poppler/bin/pdftoppm.exe not found!"
             exit 1
@@ -65,10 +67,19 @@ jobs:
 
       - name: Verify Poppler is bundled
         run: |
+          Write-Host "Checking dist/DocumentImageSearch/ structure..."
+          if (Test-Path "dist/DocumentImageSearch/") {
+            Get-ChildItem "dist/DocumentImageSearch/" -Directory | Format-Table Name
+          }
           if (Test-Path "dist/DocumentImageSearch/poppler/bin/pdftoppm.exe") {
             Write-Host "Poppler bundled successfully."
+            Get-ChildItem "dist/DocumentImageSearch/poppler/bin/" | Format-Table Name, Length
           } else {
             Write-Error "Poppler binaries missing from build output!"
+            if (Test-Path "dist/DocumentImageSearch/poppler/") {
+              Write-Host "poppler/ dir exists but bin/ contents:"
+              Get-ChildItem "dist/DocumentImageSearch/poppler/" -Recurse | Format-Table FullName
+            }
             exit 1
           }
         shell: pwsh
