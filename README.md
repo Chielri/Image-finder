@@ -39,12 +39,16 @@ Document Image Search is a web application that locates occurrences of a query i
 
 ## Prerequisites
 
+**Release package (executable):** No external dependencies are required. Poppler is bundled within the release package.
+
+**Development from source:**
+
 - Python 3.11 or later
 - Node.js 18 or later (for frontend development)
 - Poppler (required for PDF-to-image conversion):
   - **Linux:** `apt install poppler-utils`
   - **macOS:** `brew install poppler`
-  - **Windows:** Download from [poppler-windows releases](https://github.com/oschwartz10612/poppler-windows/releases) and add the `bin/` directory to your system `PATH`.
+  - **Windows:** Download from [poppler-windows releases](https://github.com/oschwartz10612/poppler-windows/releases) and add the `bin/` directory to your system `PATH`, or run `python scripts/download_poppler_windows.py` to download binaries into the project tree.
 
 ---
 
@@ -72,7 +76,7 @@ npm install
 
 ### From Executable
 
-Pre-built executables bundle both the backend server and the frontend UI into a single package. No separate frontend setup is needed. Poppler must still be installed on the system (see [Prerequisites](#prerequisites)), unless it has been bundled into the executable on Windows.
+Pre-built executables bundle the backend server, the frontend UI, and Poppler binaries into a single self-contained package. No additional software installation is required.
 
 ---
 
