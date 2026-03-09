@@ -1,6 +1,30 @@
 # Document Image Search
 
-Document Image Search is a web application that locates occurrences of a query image within a document. It accepts a document file (PDF, PNG, JPG, TIFF, or BMP) and a query image (PNG or JPG), then returns the number of matches found, their locations as bounding boxes, and per-match confidence scores. Results are displayed with visual highlights overlaid on each document page.
+**Find any image inside any document — fast, accurate, and open source.**
+
+Document Image Search is a web application that locates occurrences of a query image within a document. Upload a PDF, PNG, JPG, TIFF, or BMP file along with a target image, and the tool tells you how many times and exactly where that image appears — with visual highlights and confidence scores.
+
+## About
+
+Whether you need to find a logo across hundreds of PDF pages, verify that a signature appears in a contract, or locate a specific icon in a set of design files, Document Image Search handles it. It supports multi-scale template matching for exact and near-exact matches, as well as feature-based matching for images that may be rotated or distorted.
+
+**Key features:**
+
+- **Multi-format support** — Search through PDFs, PNGs, JPGs, TIFFs, and BMPs
+- **Multi-scale matching** — Finds images even when they appear at different sizes in the document
+- **Feature-based matching** — Handles rotation, perspective distortion, and partial occlusion
+- **Visual results** — Highlighted bounding boxes with confidence scores on each page
+- **Self-contained executable** — Download and run with no installation required
+- **REST API** — Integrate image search into your own workflows
+- **Open source** — Public domain (Unlicense), free for any use
+
+**Use cases:**
+
+- Logo detection and brand compliance auditing across documents
+- Signature and stamp verification in contracts and forms
+- Icon or symbol search in technical drawings and blueprints
+- Quality assurance for print-ready documents
+- Duplicate image detection across document pages
 
 ## Table of Contents
 
