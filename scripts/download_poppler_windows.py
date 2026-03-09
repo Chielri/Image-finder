@@ -87,11 +87,17 @@ def download_poppler() -> None:
 
     # Verify key executables exist
     key_exes = ["pdftoppm.exe", "pdfinfo.exe"]
+    missing = []
     for exe in key_exes:
         if not (dest_bin / exe).exists():
-            logger.warning("Expected %s not found in extracted binaries!", exe)
+            logger.error("Expected %s not found in extracted binaries!", exe)
+            missing.append(exe)
         else:
             logger.info("Verified: %s", exe)
+
+    if missing:
+        logger.error("Missing required Poppler executables: %s", ", ".join(missing))
+        sys.exit(1)
 
     logger.info("Poppler Windows binaries are ready at: %s", DEST_DIR)
 

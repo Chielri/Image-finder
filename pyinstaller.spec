@@ -33,8 +33,10 @@ poppler_bin = os.path.join("backend", "poppler", "bin")
 if os.path.isdir(poppler_bin):
     datas.append((poppler_bin, os.path.join("poppler", "bin")))
 elif sys.platform == "win32":
-    print("WARNING: Poppler binaries not found at backend/poppler/bin.")
-    print("Run 'python scripts/download_poppler_windows.py' first.")
+    raise FileNotFoundError(
+        "Poppler binaries not found at backend/poppler/bin. "
+        "Run 'python scripts/download_poppler_windows.py' first."
+    )
 
 a = Analysis(
     [os.path.join("backend", "main.py")],
