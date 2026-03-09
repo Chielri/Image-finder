@@ -8,10 +8,8 @@ The built executable (`DocumentImageSearch`) bundles both the backend server and
 
 ### Prerequisites
 
-- **Poppler** must be installed on your system (used for PDF-to-image conversion):
-  - **Windows:** Download from [poppler-windows releases](https://github.com/oschwartz10612/poppler-windows/releases) and add the `bin/` folder to your `PATH`.
-  - **macOS:** `brew install poppler`
-  - **Linux:** `apt install poppler-utils`
+- **Windows only:** [Poppler](https://github.com/oschwartz10612/poppler-windows/releases) is required for PDF-to-image conversion. Download it and add the `bin/` folder to your `PATH`.
+- **macOS and Linux:** No additional dependencies are needed.
 
 ### Running
 
